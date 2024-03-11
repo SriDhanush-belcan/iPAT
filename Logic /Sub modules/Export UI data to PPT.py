@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from pptx import Presentation
-from pptx.util import Inches
+from pptx.util import Inches, Pt
+from pptx.enum.text import PP_ALIGN
 
 def insert_data():
     eng_number = eng_number_entry.get()
@@ -11,6 +12,7 @@ def insert_data():
     vendor = vendor_entry.get()
     qn = qn_entry.get()
     sn = sn_entry.get()
+    line_item = line_item_entry.get()  # Get Line Item value
     
     data = {'ENG Number': eng_number,
             'Engine Module': engine_module,
@@ -18,7 +20,8 @@ def insert_data():
             'Assy P/N': assy_pn,
             'Vendor': vendor,
             'QN': qn,
-            'S/N': sn}
+            'S/N': sn,
+            'Line Item': line_item}  # Include Line Item in the data dictionary
     
     selected_file = filedialog.askopenfilename(filetypes=[("PowerPoint files", "*.pptx")])
     
@@ -26,19 +29,26 @@ def insert_data():
         prs = Presentation(selected_file)
         slide = prs.slides[0]  # Assuming the data should be inserted into the first slide
         
-        bullet_points = []
-        for key, value in data.items():
-            bullet_points.append(f"{key}: {value}")
+        # Calculate the position for the textbox
+        left = Inches(1)
+        top = Inches(1)
+        width = Inches(8)
+        height = Inches(4)
         
-        textbox = slide.shapes.add_textbox(Inches(1), Inches(1), Inches(8), Inches(4))
+        textbox = slide.shapes.add_textbox(left, top, width, height)
         text_frame = textbox.text_frame
         
-        for point in bullet_points:
+        # Set text alignment to left
+        text_frame.paragraphs[0].alignment = PP_ALIGN.LEFT
+        
+        for key, value in data.items():
+            # Add each key-value pair as a separate paragraph
             p = text_frame.add_paragraph()
-            p.text = point
-                
+            p.text = f"{key}: {value}"
+            p.space_after = Pt(10)  # Adjust spacing between paragraphs
+        
         prs.save(selected_file)
-        tk.messagebox.showinfo("Success", "Data inserted into PowerPoint successfully!")
+        messagebox.showinfo("Success", "Data inserted into PowerPoint successfully!")
 
 # GUI setup
 root = tk.Tk()
@@ -72,7 +82,11 @@ tk.Label(root, text="S/N:").grid(row=6, column=0)
 sn_entry = tk.Entry(root)
 sn_entry.grid(row=6, column=1)
 
+tk.Label(root, text="Line Item:").grid(row=7, column=0)  # New label for Line Item
+line_item_entry = tk.Entry(root)  # New entry field for Line Item
+line_item_entry.grid(row=7, column=1)  # Adjust the grid layout
+
 insert_button = tk.Button(root, text="Insert Data into PowerPoint", command=insert_data)
-insert_button.grid(row=7, columnspan=2)
+insert_button.grid(row=8, columnspan=2)  # Adjust the grid layout
 
 root.mainloop()
